@@ -216,6 +216,22 @@ module.exports = () => {
     setTarget(m) {
       am.collection.target = m;
     },
+    
+    /**
+     * Set new target
+     * @param	{Object}	m Model
+     * @private
+     * */
+    updateConfig(opts) {
+      opts = opts || {};
+
+      for (var key in opts) {
+        if (opts.hasOwnProperty(key)) {
+          var opt = opts[key];
+          am.config[key] = opt;
+        }
+      }
+    },
 
     /**
      * Set callback after asset was selected

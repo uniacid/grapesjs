@@ -1,13 +1,14 @@
 var Backbone = require('backbone');
 var AssetView = require('./AssetView');
 var AssetImageView = require('./AssetImageView');
+var AssetVideoView = require('./AssetVideoView');
 var FileUploader = require('./FileUploader');
 var assetsTemplate = `
 <div class="<%= pfx %>assets-cont">
   <div class="<%= pfx %>assets-header">
     <form class="<%= pfx %>add-asset">
       <div class="<%= ppfx %>field <%= pfx %>add-field">
-        <input placeholder="http://path/to/the/image.jpg"/>
+        <input placeholder="<%= uploadPlaceholderText %>"/>
       </div>
       <button class="<%= ppfx %>btn-prim"><%= btnText %></button>
       <div style="clear:both"></div>
@@ -28,6 +29,7 @@ module.exports = Backbone.View.extend({
   template: _.template(assetsTemplate),
 
   initialize(o) {
+    console.log('o:', o);
     this.options = o;
     this.config = o.config;
     this.pfx = this.config.stylePrefix || '';
@@ -36,6 +38,8 @@ module.exports = Backbone.View.extend({
     this.listenTo(this.collection, 'deselectAll', this.deselectAll);
     this.listenTo(this.collection, 'reset', this.render);
     this.className  = this.pfx + 'assets';
+    this.addBtnText = this.config.addBtnText;
+    this.uploadPlaceholderText = this.config.uploadPlaceholderText;
 
     this.events = {};
     this.events.submit = 'addFromStr';
@@ -57,8 +61,32 @@ module.exports = Backbone.View.extend({
 
     if(!url)
       return;
+    console.log('url:',url);
 
-    this.collection.addImg(url, {at: 0});
+    var fileExtensionPatter = /\.([0-9a-z]+)(?=[?#])|(\.)(?:[\w]+)$/gmi
+    
+    var fileExtensionMatch = url.match(fileExtensionPatter);
+    if (fileExtensionMatch && fileExtensionMatch.length > 0)
+      var fileExtension = fileExtensionMatch[0];
+    else
+      var fileExtension = '';
+    console.log(fileExtension);
+
+    switch (fileExtension) {
+      case '.avi':
+      case '.mpeg':
+      case '.mpeg':
+      case '.mp4':
+      case '.ogv':
+      case '.webm':
+        this.collection.addVideo(url, {at: 0});
+        break;
+      case '.css':
+      default:
+        // returns .css
+        this.collection.addImg(url, {at: 0});
+        break;
+    }
 
     this.getAssetsEl().scrollTop = 0;
     input.value = '';
@@ -108,6 +136,8 @@ module.exports = Backbone.View.extend({
 
     if(model.get('type').indexOf("image") > -1)
       viewObject  = AssetImageView;
+    if(model.get('type').indexOf("video") > -1)
+      viewObject  = AssetVideoView;
 
     var view     = new viewObject({
       model,
@@ -135,6 +165,8 @@ module.exports = Backbone.View.extend({
   },
 
   render() {
+    console.log('render:',this);
+
     var fragment = document.createDocumentFragment();
     this.$el.empty();
 
@@ -142,10 +174,14 @@ module.exports = Backbone.View.extend({
       this.addAsset(model, fragment);
     },this);
 
+    this.addBtnText = this.config.addBtnText;
+    this.uploadPlaceholderText = this.config.uploadPlaceholderText;
+
     this.$el.html(this.template({
       pfx: this.pfx,
       ppfx: this.ppfx,
-      btnText: this.config.addBtnText,
+      btnText: this.addBtnText,
+      uploadPlaceholderText: this.uploadPlaceholderText
     }));
 
     this.$el.find('.'+this.pfx + 'assets').append(fragment);

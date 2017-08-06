@@ -14,6 +14,9 @@ module.exports =  {
   // Label for the add button
   addBtnText: 'Add image',
 
+  // Placeholder text for file input
+  uploadPlaceholderText: 'http://path/to/the/image.jpg',
+
   // Custom uploadFile function
   // @example
   // uploadFile: function(e) {

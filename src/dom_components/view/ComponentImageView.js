@@ -46,6 +46,7 @@ module.exports = ComponentView.extend({
     var editor = em ? em.get('Editor') : '';
 
     if(editor) {
+      console.log('open-assets');
       editor.runCommand('open-assets', {
         target: this.model,
         onSelect() {

@@ -5,12 +5,17 @@ module.exports = ComponentView.extend({
 
   tagName: 'div',
 
-  events: {},
+  events: {
+    'dblclick': 'openModal',
+  },
 
   initialize(o) {
     ComponentView.prototype.initialize.apply(this, arguments);
     this.listenTo(this.model, 'change:loop change:autoplay change:controls change:color', this.updateVideo);
     this.listenTo(this.model, 'change:provider', this.updateProvider);
+    this.listenTo(this.model, 'change:src', this.updateSrc);
+    this.listenTo(this.model, 'dblclick active', this.openModal);
+    this.classEmpty = this.ppfx + 'plh-image';
   },
 
   /**
@@ -39,6 +44,10 @@ module.exports = ComponentView.extend({
         break;
     }
     this.videoEl.src = src;
+    if(!src)
+      this.$el.addClass(this.classEmpty);
+    else
+      this.$el.removeClass(this.classEmpty);
   },
 
   /**
@@ -107,11 +116,54 @@ module.exports = ComponentView.extend({
     el.style.width = '100%';
   },
 
+  /**
+   * Open dialog for video changing
+   * @param  {Object}  e  Event
+   * @private
+   * */
+  openModal(e) {
+    var em = this.opts.config.em;
+    var editor = em ? em.get('Editor') : '';
+
+    var videoAssets = { assets: [
+      { 
+        type: 'video', 
+        src : 'https://ia800209.us.archive.org/4/items/placeholder-videos-2016/1920x1080.mp4', 
+      },
+      { 
+        type: 'video', 
+        src : 'https://puu.sh/wOqVA/3fe46c9353.mp4', 
+      },
+    ]};
+
+    if(editor) {
+      editor.runCommand('open-assets', {
+        target: this.model,
+        modalTitle: 'Select video',
+        addBtnText: 'Add video',
+        uploadPlaceholderText: 'http://path/to/the/video.mp4',
+        assets: videoAssets,
+        onSelect() {
+          editor.Modal.close();
+          editor.AssetManager.setTarget(null);
+        }
+      });
+    }
+  },
+
+
   render(...args) {
     ComponentView.prototype.render.apply(this, args);
     this.updateClasses();
+
+    var actCls = this.$el.attr('class') || '';
+    if(!this.model.get('src'))
+      this.$el.attr('class', (actCls + ' ' + this.classEmpty).trim());
+
     var prov = this.model.get('provider');
     this.el.appendChild(this.renderByProvider(prov));
+    // Avoid strange behaviours while try to drag
+    this.$el.attr('onmousedown', 'return false');
     return this;
   },
 
