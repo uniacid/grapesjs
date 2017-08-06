@@ -1,6 +1,7 @@
 var Backbone = require('backbone');
 var Asset = require('./Asset');
 var AssetImage = require('./AssetImage');
+var AssetVideo = require('./AssetVideo');
 
 module.exports = Backbone.Collection.extend({
 
@@ -11,6 +12,8 @@ module.exports = Backbone.Collection.extend({
     this.model = (attrs, options) => {
       var model;
       switch(attrs.type){
+        case 'video':
+          model = new AssetVideo(attrs, options); 
         default:
           model = new AssetImage(attrs, options);
       }
@@ -27,9 +30,28 @@ module.exports = Backbone.Collection.extend({
    * @private
    */
   addImg(url, opts) {
+    console.log('addImg');
     this.add({
       type: 'image',
       src: url,
+    }, opts);
+    return this;
+  },
+  
+  /**
+   * Add new video asset to the collection
+   * @param {string} url URL of the video
+   * @param {Object} opts Options
+   * @param {string} videoPreview URL of the video image
+   * @return {this}
+   * @private
+   */
+  addVideo(url, opts, videoPreview) {
+    console.log('addVideo');
+    this.add({
+      type: 'video',
+      src: url,
+      videoPreview: videoPreview || '/img/lesson-plans/video-placeholder.jpg'
     }, opts);
     return this;
   },
