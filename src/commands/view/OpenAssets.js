@@ -12,12 +12,12 @@ module.exports = {
       'addBtnText': opt.addBtnText,
       'uploadPlaceholderText': opt.uploadPlaceholderText
     });
-    if (opt.assets) {
+    // if (opt.assets) {
       // Reset assets and load
       console.log('assets:',opt.assets);
       assetManager.getAll().reset();
       assetManager.load(opt.assets);
-    }
+    // }
 
     assetManager.onClick(opt.onClick);
     assetManager.onDblClick(opt.onDblClick);
