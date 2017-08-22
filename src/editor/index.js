@@ -365,6 +365,7 @@ module.exports = config => {
       var command = em.get('Commands').get(id);
 
       if(command){
+        // console.log('running command: ', id);
         result = command.run(this, this, options);
         this.trigger('run:' + id);
       }
