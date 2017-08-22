@@ -283,8 +283,8 @@ module.exports = Backbone.View.extend({
     if (dropContent && em) {
       if (!dropModel) {
         let comps = em.get('DomComponents').getComponents();
-        let tempModel = comps.add(dropContent, {avoidUpdateStyle: 1});
-        dropModel = comps.remove(tempModel);
+        let tempModel = comps.add(dropContent, {avoidUpdateStyle: 1, temporary: 1});
+        dropModel = comps.remove(tempModel, {temporary: 1});
         this.dropModel = dropModel instanceof Array ? dropModel[0] : dropModel;
       }
       return dropModel;
@@ -769,8 +769,10 @@ module.exports = Backbone.View.extend({
       }
     }
 
-    if(this.moved)
+    if (this.moved) {
       created = this.move(this.target, src, this.lastPos);
+    }
+
     if(this.plh)
       this.plh.style.display = 'none';
 

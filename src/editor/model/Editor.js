@@ -32,6 +32,7 @@ module.exports = Backbone.Model.extend({
     previousModel: null,
     changesCount:  0,
     storables: [],
+    modules: [],
     toLoad: [],
     opened: {},
     device: '',
@@ -40,6 +41,7 @@ module.exports = Backbone.Model.extend({
   initialize(c) {
     this.config = c;
     this.set('Config', c);
+    this.set('modules', []);
 
     if(c.el && c.fromElement)
       this.config.components = c.el.innerHTML;
@@ -117,6 +119,7 @@ module.exports = Backbone.Model.extend({
     if(M.onLoad)
       this.get('toLoad').push(M);
 
+    this.get('modules').push(M);
     return this;
   },
 
@@ -161,6 +164,12 @@ module.exports = Backbone.Model.extend({
    * @private
    * */
   componentsUpdated(model, val, opt) {
+    var temp = opt ? opt.temporary : 0;
+    if (temp) {
+      //component has been added temporarily - do not update storage or record changes
+      return;
+    }
+
     timedInterval && clearInterval(timedInterval);
     timedInterval = setTimeout(() => {
       var count = this.get('changesCount') + 1;
@@ -203,10 +212,9 @@ module.exports = Backbone.Model.extend({
         that.trigger('component:update');
       });
 
-      UndoManager.removeUndoType("change");
       var beforeCache;
-      UndoManager.addUndoType("change:style", {
-        "on": function (model, value, opts) {
+      const customUndoType = {
+        on: function (model, value, opts) {
           var opt = opts || {};
           if(!beforeCache){
             beforeCache = model.previousAttributes();
@@ -223,17 +231,20 @@ module.exports = Backbone.Model.extend({
             return obj;
           }
         },
-        "undo": function (model, bf, af, opt) {
+        undo: function (model, bf, af, opt) {
           model.set(bf);
           // Update also inputs inside Style Manager
           that.trigger('change:selectedComponent');
         },
-        "redo": function (model, bf, af, opt) {
+        redo: function (model, bf, af, opt) {
           model.set(af);
           // Update also inputs inside Style Manager
           that.trigger('change:selectedComponent');
         }
-      });
+      };
+      UndoManager.removeUndoType("change");
+      UndoManager.addUndoType("change:style", customUndoType);
+      UndoManager.addUndoType("change:content", customUndoType);
     }
   },
 
@@ -276,12 +287,12 @@ module.exports = Backbone.Model.extend({
     this.stopListening(classes, 'add remove', this.componentsUpdated);
     this.listenTo(classes, 'add remove', this.componentsUpdated);
 
-    var evn = 'change:style change:content';
+    var evn = 'change:style change:content change:attributes';
     this.stopListening(model, evn, this.componentsUpdated);
     this.listenTo(model, evn, this.componentsUpdated);
 
     if(!avSt)
-      this.componentsUpdated();
+      this.componentsUpdated(model, val, opt);
   },
 
   /**
@@ -310,7 +321,7 @@ module.exports = Backbone.Model.extend({
     var avSt  = opt ? opt.avoidStore : 0;
 
     if(!avSt)
-      this.componentsUpdated();
+      this.componentsUpdated(model, val, opt);
   },
 
   /**
@@ -320,6 +331,21 @@ module.exports = Backbone.Model.extend({
    */
   getSelected() {
     return this.get('selectedComponent');
+  },
+
+  /**
+   * Select a component
+   * @param  {Component|HTMLElement} el Component to select
+   * @private
+   */
+  setSelected(el) {
+    let model = el;
+
+    if (el instanceof HTMLElement) {
+      model = $(el).data('model');
+    }
+
+    this.set('selectedComponent', model);
   },
 
   /**

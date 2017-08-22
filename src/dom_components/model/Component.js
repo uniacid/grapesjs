@@ -43,6 +43,7 @@ module.exports = Backbone.Model.extend(Styleable).extend({
     copyable: true,
 
     // Indicates if it's possible to resize the component (at the moment implemented only on Image Components)
+    // It's also possible to pass an object as options for the Resizer
     resizable: false,
 
     // Allow to edit the content of the component (used on Text components)
@@ -112,8 +113,9 @@ module.exports = Backbone.Model.extend(Styleable).extend({
     this.defaultCl = this.normalizeClasses(this.get('classes') || this.config.classes || []);
     this.components	= new Components(this.defaultC, opt);
     this.components.parent = this;
-    this.listenTo(this, 'change:script', this.scriptUpdated);
     this.set('attributes', this.get('attributes') || {});
+    this.listenTo(this, 'change:script', this.scriptUpdated);
+    this.listenTo(this, 'change:traits', this.traitsUpdated);
     this.set('components', this.components);
     this.set('classes', new Selectors(this.defaultCl));
     var traits = new Traits();
@@ -147,6 +149,26 @@ module.exports = Backbone.Model.extend(Styleable).extend({
    */
   scriptUpdated() {
     this.set('scriptUpdated', 1);
+  },
+
+  /**
+   * Once traits are updated I have to populates model's attributes
+   */
+  traitsUpdated() {
+    let found = 0;
+    const attrs = Object.assign({}, this.get('attributes'));
+
+    this.get('traits').each((trait) => {
+      found = 1;
+      if (!trait.get('changeProp')) {
+        const value = trait.getInitValue();
+        if (value) {
+          attrs[trait.get('name')] = value;
+        }
+      }
+    });
+
+    found && this.set('attributes', attrs);
   },
 
   /**

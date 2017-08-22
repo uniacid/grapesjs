@@ -7,7 +7,7 @@ module.exports = PropertyCompositeView.extend({
 
   template: _.template(`
   <div class="<%= pfx %>field <%= pfx %>stack">
-    <button id='<%= pfx %>add'>+</button>
+    <button type="button" id='<%= pfx %>add'>+</button>
     <span id='<%= pfx %>input-holder'></span>
   </div>
   <div style="clear:both"></div>`),
@@ -319,6 +319,7 @@ module.exports = PropertyCompositeView.extend({
     this.renderField();
     this.renderLayers();
     this.$el.attr('class', this.className);
+    this.updateStatus();
     return this;
   },
 

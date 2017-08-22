@@ -10,6 +10,7 @@
  * * [getStyle](#getstyle)
  * * [setStyle](#setstyle)
  * * [getSelected](#getselected)
+ * * [getSelectedToStyle](#getselectedtostyle)
  * * [setDevice](#setdevice)
  * * [getDevice](#getdevice)
  * * [runCommand](#runcommand)
@@ -84,10 +85,9 @@ module.exports = config => {
     if (!(name in c))
       c[name] = defaults[name];
   }
+
   c.pStylePrefix = c.stylePrefix;
-
   var em = new EditorModel(c);
-
   var editorView = new EditorView({
       model: em,
       config: c,
@@ -314,9 +314,9 @@ module.exports = config => {
     },
 
     /**
-     * Get stylable entity from the selected component.
-     * If you select the component without classes the entity is the Component
-     * itself and all changes will go inside its 'style' property. Otherwise,
+     * Get a stylable entity from the selected component.
+     * If you select a component without classes the entity is the Component
+     * itself and all changes will go inside its 'style' attribute. Otherwise,
      * if the selected component has one or more classes, the function will
      * return the corresponding CSS Rule
      * @return {Model}
@@ -330,14 +330,31 @@ module.exports = config => {
     },
 
     /**
+     * Select a component
+     * @param  {Component|HTMLElement} el Component to select
+     * @return {this}
+     * @example
+     * // Select dropped block
+     * editor.on('block:drag:stop', function(model) {
+     *  editor.select(model);
+     * });
+     */
+    select(el) {
+      em.setSelected(el);
+      return this;
+    },
+
+    /**
      * Set device to the editor. If the device exists it will
      * change the canvas to the proper width
+     * @param {string} name Name of the device
      * @return {this}
      * @example
      * editor.setDevice('Tablet');
      */
     setDevice(name) {
-      return em.set('device', name);
+      em.set('device', name);
+      return this;
     },
 
     /**
@@ -517,7 +534,16 @@ module.exports = config => {
      * @return {HTMLElement}
      */
     render() {
-      return  editorView.render().el;
+      // Do post render stuff after the iframe is loaded otherwise it'll
+      // be empty during tests
+      em.on('loaded', () => {
+        em.get('modules').forEach((module) => {
+          module.postRender && module.postRender(editorView);
+        });
+      });
+
+      editorView.render();
+      return editorView.el;
     },
 
   };
